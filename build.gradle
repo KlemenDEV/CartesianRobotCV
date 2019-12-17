@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+group 'klemen.pevec'
+version '1.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.openpnp', name: 'opencv', version: '3.4.2-1'
+}
