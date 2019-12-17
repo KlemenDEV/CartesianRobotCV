@@ -13,4 +13,5 @@ repositories {
 
 dependencies {
     implementation group: 'org.openpnp', name: 'opencv', version: '3.4.2-1'
+    implementation group: 'com.fazecast', name: 'jSerialComm', version: '[2.0.0,3.0.0)'
 }
