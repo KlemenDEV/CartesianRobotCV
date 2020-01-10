@@ -4,8 +4,6 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 
-import java.awt.*;
-import java.awt.geom.Point2D;
 import java.util.List;
 
 public class SerialTask implements Runnable {
@@ -18,9 +16,9 @@ public class SerialTask implements Runnable {
 		this.main = main;
 	}
 
-	void sendPoints(Point... points) {
+	void sendPoints(List<Point> points) {
 		for (Point point : points) {
-			sendData(new byte[]{0x02});
+			sendData(new byte[] { 0x02 });
 			wait(20);
 			sendData(float2bytearr(point.getX()));
 			wait(30);
@@ -29,7 +27,8 @@ public class SerialTask implements Runnable {
 	}
 
 	void sendData(byte[] data) {
-		comPort.writeBytes(data, data.length);
+		if (comPort != null)
+			comPort.writeBytes(data, data.length);
 	}
 
 	@Override public void run() {
@@ -40,6 +39,11 @@ public class SerialTask implements Runnable {
 		}
 
 		main.printToLog("Opening serial port\n");
+
+		if (comPort == null) {
+			main.printToLog("Failed to open serial port\n");
+			return;
+		}
 
 		comPort.openPort();
 
@@ -78,10 +82,10 @@ public class SerialTask implements Runnable {
 	private byte[] float2bytearr(float num) {
 		int bits = Float.floatToIntBits(num);
 		byte[] bytes = new byte[4];
-		bytes[0] = (byte)(bits & 0xff);
-		bytes[1] = (byte)((bits >> 8) & 0xff);
-		bytes[2] = (byte)((bits >> 16) & 0xff);
-		bytes[3] = (byte)((bits >> 24) & 0xff);
+		bytes[0] = (byte) (bits & 0xff);
+		bytes[1] = (byte) ((bits >> 8) & 0xff);
+		bytes[2] = (byte) ((bits >> 16) & 0xff);
+		bytes[3] = (byte) ((bits >> 24) & 0xff);
 		return bytes;
 	}
 

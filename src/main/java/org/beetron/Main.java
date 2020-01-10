@@ -2,24 +2,24 @@ package org.beetron;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Main extends JFrame {
 
 	private JTextArea log = new JTextArea();
 
+	private JLabel display = new JLabel();
+
 	private Main(SerialTask serialTask, OpenCVTask openCVTask) {
 		JToolBar controls = new JToolBar();
+		controls.setFloatable(false);
 		add("North", controls);
 
 		JButton sendData = new JButton("Send points");
 		controls.add(sendData);
-		sendData.addActionListener(e -> {
-			serialTask.sendPoints(
-					new Point(7, 0),
-					new Point(1, 0),
-					new Point(5, 0)
-			);
-		});
+		sendData.addActionListener(e -> serialTask.sendPoints(openCVTask.getPoints()));
+
+		controls.add(Box.createHorizontalGlue());
 
 		JButton start = new JButton("Start");
 		controls.add(start);
@@ -36,14 +36,30 @@ public class Main extends JFrame {
 		emergency.addActionListener(e -> serialTask.sendData(new byte[] { 0x0F }));
 		emergency.setBackground(new Color(255, 0, 0));
 
+		log.setBackground(Color.darkGray);
+		log.setForeground(Color.white);
+
 		JScrollPane sp = new JScrollPane(log);
 		sp.setPreferredSize(new Dimension(0, 200));
+		sp.setBorder(null);
+		log.setBorder(null);
 
 		add("South", sp);
+
+		JPanel center = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		center.add(display);
+
+		center.setBackground(Color.black);
+
+		add("Center", center);
 	}
 
 	void printToLog(String text) {
 		log.append(text);
+	}
+
+	void setDisplay(BufferedImage image) {
+		display.setIcon(new ImageIcon(image));
 	}
 
 	public static void main(String[] args) {
@@ -57,13 +73,15 @@ public class Main extends JFrame {
 			Main main = new Main(serialTask, openCVTask);
 
 			serialTask.setMain(main);
+			openCVTask.setMain(main);
 
+			main.setTitle("Cartesian robot controller");
 			main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			main.setSize(900, 550);
+			main.setSize(1200, 760);
 			main.setLocationRelativeTo(null);
 			main.setVisible(true);
 
-			//new Thread(openCVTask).start();
+			new Thread(openCVTask).start();
 			new Thread(serialTask).start();
 		});
 	}
