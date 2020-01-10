@@ -1,11 +1,16 @@
 package org.beetron;
 
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Size;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class OpenCVTask implements Runnable {
@@ -17,7 +22,7 @@ public class OpenCVTask implements Runnable {
 	}
 
 	@Override public void run() {
-		VideoCapture camera = new VideoCapture(1);
+		VideoCapture camera = new VideoCapture(0);
 
 		Mat frame = new Mat();
 		camera.read(frame);
@@ -31,7 +36,28 @@ public class OpenCVTask implements Runnable {
 
 			while (true) {
 				if (camera.read(frame)) {
+					Imgproc.resize(frame, frame, new Size(640, 480));
+					Imgproc.GaussianBlur(frame, frame, new Size(0, 0), 1, 1);
+
+					FeatureDetector blobDetector = FeatureDetector.create(FeatureDetector.SIMPLEBLOB);
+
+					MatOfKeyPoint matOfKeyPoint = new MatOfKeyPoint();
+					blobDetector.detect(frame, matOfKeyPoint);
+
+					KeyPoint[] points = matOfKeyPoint.toArray();
+
 					result = matToBufferedImage(frame, result);
+
+					if (result != null) {
+						Graphics g = result.getGraphics();
+						g.setColor(Color.red);
+
+						for (KeyPoint point : points) {
+							g.drawOval((int) point.pt.x, (int) point.pt.y, 10, 10);
+						}
+
+						g.dispose();
+					}
 
 					main.setDisplay(result);
 				} else {
