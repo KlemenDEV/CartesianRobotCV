@@ -1,8 +1,12 @@
 package org.beetron;
 
+import jdk.nashorn.internal.scripts.JO;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main extends JFrame {
 
@@ -15,9 +19,36 @@ public class Main extends JFrame {
 		controls.setFloatable(false);
 		add("North", controls);
 
-		JButton sendData = new JButton("Send points");
+		JButton startCamera = new JButton("Start camera");
+		controls.add(startCamera);
+		startCamera.addActionListener(e -> {
+			startCamera.setEnabled(false);
+			new Thread(openCVTask).start();
+		});
+
+		JButton sendData = new JButton("Send points from camera");
 		controls.add(sendData);
 		sendData.addActionListener(e -> serialTask.sendPoints(openCVTask.getPoints()));
+
+		JButton sendDataManual = new JButton("Send manual points");
+		controls.add(sendDataManual);
+		sendDataManual.addActionListener(e -> {
+			String data = JOptionPane.showInputDialog(null, "Enter points in the following format: (1.1, 1.1) (2, 2)");
+			try {
+				List<Point> pts = new ArrayList<>();
+				String[] points = data.split("\\) \\(");
+				for (String point : points) {
+					String[] cds = point.split(",");
+					float x = Float.parseFloat(cds[0].replace("(", "").trim());
+					float y = Float.parseFloat(cds[1].replace(")", "").trim());
+					pts.add(new Point(x, y));
+				}
+				serialTask.sendPoints(pts);
+				System.err.println(pts);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		});
 
 		controls.add(Box.createHorizontalGlue());
 
@@ -35,6 +66,7 @@ public class Main extends JFrame {
 		controls.add(emergency);
 		emergency.addActionListener(e -> serialTask.sendData(new byte[] { 0x0F }));
 		emergency.setBackground(new Color(255, 0, 0));
+		emergency.setForeground(Color.white);
 
 		log.setBackground(Color.darkGray);
 		log.setForeground(Color.white);
@@ -81,7 +113,6 @@ public class Main extends JFrame {
 			main.setLocationRelativeTo(null);
 			main.setVisible(true);
 
-			new Thread(openCVTask).start();
 			new Thread(serialTask).start();
 		});
 	}

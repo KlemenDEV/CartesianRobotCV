@@ -16,4 +16,8 @@ public class Point {
 	public float getY() {
 		return y;
 	}
+
+	@Override public String toString() {
+		return "(" + x + ", " + y + ")";
+	}
 }

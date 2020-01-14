@@ -10,6 +10,7 @@ import org.opencv.videoio.VideoCapture;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,12 +18,14 @@ public class OpenCVTask implements Runnable {
 
 	private Main main;
 
+	private transient KeyPoint[] points;
+
 	void setMain(Main main) {
 		this.main = main;
 	}
 
 	@Override public void run() {
-		VideoCapture camera = new VideoCapture(0);
+		VideoCapture camera = new VideoCapture(1);
 
 		Mat frame = new Mat();
 		camera.read(frame);
@@ -44,16 +47,16 @@ public class OpenCVTask implements Runnable {
 					MatOfKeyPoint matOfKeyPoint = new MatOfKeyPoint();
 					blobDetector.detect(frame, matOfKeyPoint);
 
-					KeyPoint[] points = matOfKeyPoint.toArray();
+					points = matOfKeyPoint.toArray();
 
 					result = matToBufferedImage(frame, result);
 
 					if (result != null) {
 						Graphics g = result.getGraphics();
-						g.setColor(Color.red);
+						g.setColor(Color.green);
 
 						for (KeyPoint point : points) {
-							g.drawOval((int) point.pt.x, (int) point.pt.y, 10, 10);
+							g.fillOval((int) point.pt.x - 3, (int) point.pt.y - 3, 6, 6);
 						}
 
 						g.dispose();
@@ -68,8 +71,12 @@ public class OpenCVTask implements Runnable {
 		camera.release();
 	}
 
-	public List<Point> getPoints() {
-		return Arrays.asList(new Point(7, 0), new Point(1, 0), new Point(5, 0));
+	List<Point> getPoints() {
+		List<Point> outputPoints = new ArrayList<>();
+		for (KeyPoint point : points) {
+			outputPoints.add(new Point((float) point.pt.x, (float) point.pt.y));
+		}
+		return outputPoints;
 	}
 
 	private BufferedImage matToBufferedImage(Mat matrix, BufferedImage bimg) {
