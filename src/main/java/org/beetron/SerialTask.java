@@ -55,6 +55,8 @@ public class SerialTask implements Runnable {
 		main.printToLog("Reset board using onboard button\n\n");
 
 		comPort.addDataListener(new SerialPortDataListener() {
+			String currentData = "";
+
 			@Override public int getListeningEvents() {
 				return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
 			}
@@ -63,10 +65,21 @@ public class SerialTask implements Runnable {
 				if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE)
 					return;
 
-				byte[] newData = new byte[comPort.bytesAvailable()];
-				comPort.readBytes(newData, newData.length);
+				byte[] data = new byte[comPort.bytesAvailable()];
+				comPort.readBytes(data, data.length);
 
-				main.printToLog(new String(newData));
+				currentData += new String(data);
+				if (currentData.contains("\r\n")) {
+					String[] lines = currentData.split("\n\n");
+					if (lines.length == 1) {
+						main.printToLog(new String(lines[0].getBytes()));
+						currentData = "";
+					} else {
+						for (int i = 0; i < lines.length - 1; i++)
+							main.printToLog(new String(lines[i].getBytes()));
+						currentData = lines[lines.length - 1];
+					}
+				}
 			}
 		});
 	}

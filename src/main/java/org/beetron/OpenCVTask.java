@@ -11,7 +11,6 @@ import org.opencv.videoio.VideoCapture;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class OpenCVTask implements Runnable {
@@ -40,6 +39,7 @@ public class OpenCVTask implements Runnable {
 			while (true) {
 				if (camera.read(frame)) {
 					Imgproc.resize(frame, frame, new Size(640, 480));
+
 					Imgproc.GaussianBlur(frame, frame, new Size(0, 0), 1, 1);
 
 					FeatureDetector blobDetector = FeatureDetector.create(FeatureDetector.SIMPLEBLOB);
@@ -55,8 +55,8 @@ public class OpenCVTask implements Runnable {
 						Graphics g = result.getGraphics();
 						g.setColor(Color.green);
 
-						for (KeyPoint point : points) {
-							g.fillOval((int) point.pt.x - 3, (int) point.pt.y - 3, 6, 6);
+						for (Point point : getPointsRaw()) {
+							g.fillOval((int) point.getX() - 3, (int) point.getY() - 3, 6, 6);
 						}
 
 						g.dispose();
@@ -71,12 +71,42 @@ public class OpenCVTask implements Runnable {
 		camera.release();
 	}
 
-	List<Point> getPoints() {
+	// minx: 195 miny: 240
+	// maxx: 490 maxy: 357
+	private List<Point> getPointsRaw() {
 		List<Point> outputPoints = new ArrayList<>();
 		for (KeyPoint point : points) {
-			outputPoints.add(new Point((float) point.pt.x, (float) point.pt.y));
+			float x = (float) point.pt.x;
+			float y = (float) point.pt.y;
+
+			if(x < 195 || y < 240 || x > 490 || y > 370)
+				continue;
+
+			outputPoints.add(new Point(x, y));
 		}
 		return outputPoints;
+	}
+
+
+	List<Point> getPoints() {
+		return tranformPoints(getPointsRaw());
+	}
+
+	float a = 0.0000803573f, b = 0.0579862f, c = -12.3441f;
+	float d = 0.0573585f, e = 0.00102836f, f = -5.8176f;
+
+	private List<Point> tranformPoints(List<Point> points) {
+		for (Point point : points) {
+			float x = point.getX();
+			float y = point.getY();
+
+			float rx = a*x + b*y + c;
+			float ry = d*x + e*y + f - 0.1f;
+
+			point.setX(rx);
+			point.setY(ry);
+		}
+		return points;
 	}
 
 	private BufferedImage matToBufferedImage(Mat matrix, BufferedImage bimg) {
